@@ -1,0 +1,152 @@
+#!/usr/bin/env sh
+
+DRYRUN='no'; USETHEFORCE='no'; BLOCKEMAIL='no'
+LICENSE=
+[ -n "$LICENSE_YEAR" ] && YEAR="$LICENSE_YEAR" \
+    || YEAR="$(date +%Y || echo '20xx')"
+[ -n "$LICENSE_FULLNAME" ] && NAME="$LICENSE_FULLNAME" \
+    || NAME="$(git config --get user.name 2>/dev/null \
+                 || id -F 2>/dev/null || id -un 2>/dev/null \
+                 || whoami || echo 'the project author(s)')"
+[ -n "$LICENSE_EMAIL" ] && EMAIL="$LICENSE_EMAIL" \
+    || EMAIL="$(git config --get user.email 2>/dev/null \
+                  || echo '')"
+
+# if $LICENSE_DIR is not set already by the user, check for
+# potential locations in the following order of preference:
+# 1. ~/.config/addlicense/LICENSES
+# 2. ~/.addlicense/LICENSES
+# 3. ~/.LICENSES
+# 4. ~/LICENSES
+# 5. /usr/local/share/LICENSES
+# 6. /usr/share/LICENSES
+if [ -z "$LICENSE_DIR" ]; then 
+    [ -d "$HOME/.config/addlicense/LICENSES" ] \
+      && LICENSE_DIR="$HOME/.config/addlicense/LICENSES" \
+      || [ -d "$HOME/.addlicense/LICENSES" ] \
+      && LICENSE_DIR="$HOME/.addlicense/LICENSES" \
+      || [ -d "$HOME/.LICENSES" ] \
+      && LICENSE_DIR="$HOME/.LICENSES" \
+      || [ -d "$HOME/LICENSES" ] \
+      && LICENSE_DIR="$HOME/LICENSES" \
+      || [ -d "/usr/local/share/LICENSES" ] \
+      && LICENSE_DIR="/usr/local/share/LICENSES" \
+      || [ -d "/usr/share/LICENSES" ] \
+      && LICENSE_DIR="/usr/share/LICENSES"
+fi
+LICENSE_OPTIONS="$(ls $LICENSE_DIR | sed 's/\..*$//g' | xargs | fmt -w 73)"
+HELP_TEXT=\
+"USAGE: ${0##*/} [ --name <name> ] [ --year <year> ] [ --email <email> ]
+            [ -f | --force ] [ --no-email ] [ --dry-run ] <license name>
+       ${0##*/} [ -l | --list ]
+OPTIONS:
+    -h,--help                 Print this info
+    -l,--list                 List names of available licenses
+    --name <name>             Use specified full name. If not included,
+                              \$LICENSE_FULLNAME will be used if it is
+                              defined; otherwise various programs will
+                              be used in an attempt to guess the user's
+                              name: git-config(1), id(1), whoami(1), etc
+    --email <email>           Use specified email. If not included,
+                              \$LICENSE_EMAIL, then git-config(1) will be
+                              checked for a user email - if neither is
+                              defined, no contact info will be included
+                              alongside user's full name.
+    --year <year>             Use specified copyright date. If not
+                              included, \$LICENSE_YEAR will be used if
+                              defined; otherwise output from date(1)
+                              will be used as a fallback
+    --no-email                Forces email to be excluded from name even
+                              if one is defined in git-config(1) & can
+                              be found by the script; pretty much equiv.
+                              to \`--email ''\`
+    -f,--force                Continue even if a \`LICENSE' file already
+                              exists in the current working directory
+    --dry-run                 Print the license, name, etc to be used,
+                              but do not actually create or overwrite a
+                              \`LICENSE' file in the current directory
+AVAILABLE LICENSES:
+$LICENSE_OPTIONS"
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -l|--list)
+            echo >&2 "AVAILABLE LICENSES:"
+            echo >&2 "$LICENSE_OPTIONS"
+            exit 1
+            ;;
+        -h|--help)
+            echo >&2 "${0##*/}: add a license to the current directory"
+            echo >&2 "$HELP_TEXT"; exit
+            ;;
+        --name)
+            if [ -z "$2" ]; then
+                echo >&2 "${0##*/}: option $1 requires argument <name>"
+            else
+                NAME="$2"; shift
+            fi
+            ;;
+        --email)
+            if [ -z "$2" ]; then
+                echo >&2 "${0##*/}: option $1 requires argument <email>"
+            else
+                EMAIL="$2"; shift
+            fi
+            ;;
+        --year)
+            if [ -z "$2" ]; then
+                echo >&2 "${0##*/}: option $1 requires argument <year>"
+            else
+                YEAR="$2"; shift
+            fi
+            ;;
+        --no-email)
+            BLOCKEMAIL='yes'
+            ;;
+        --dry-run)
+            DRYRUN='yes'
+            ;;
+        -f|--force)
+            USETHEFORCE='yes'
+            ;;
+        -*)
+            echo >&2 "${0##*/}: option not recognized: $1"
+            echo >&2 "$HELP_TEXT"
+            exit 1
+            ;;
+        *)
+            if [ -n "$LICENSE" ]; then
+                echo >&2 "${0##*/}: only specify one license name"
+                exit 1
+            elif ! ls "$LICENSE_DIR" | grep $1 &>/dev/null; then
+                echo >&2 "${0##*/}: license \`$1' not available"
+                echo >&2 "AVAILABLE LICENSES:"
+                echo >&2 "$LICENSE_OPTIONS"
+                exit 1
+            else
+                LICENSE="$1"
+            fi
+            ;;
+    esac
+    shift
+done
+
+[ -n "$EMAIL" ] && [ "$BLOCKEMAIL" = 'no' ] && EMAIL=" <${EMAIL}>" || EMAIL=''
+if [ -z "$LICENSE" ]; then
+    echo >&2 "${0##*/}: you must specify a license name"
+    echo >&2 "$HELP_TEXT"; exit 1
+fi
+
+if [ ! -e ./LICENSE ] || [ "$USETHEFORCE" = 'yes' ]; then
+    PROJECT_NAME="$(pwd | sed -E 's/^.*\/([^/]*)\/?/\1/')"
+    echo >&2 "© $YEAR by ${NAME}${EMAIL}"
+    echo >&2 "license: $LICENSE"
+    [ "$DRYRUN" = 'no' ] && \
+      sed "s/\[fullname\]/${NAME}${EMAIL}/g;s/\[year\]/$YEAR/g" <"$HOME/src/LICENSES/$LICENSE" \
+        | fmt -w 74 > ./LICENSE \
+        && echo >&2 "success: added license to \`$PROJECT_NAME'" \
+        || echo >&2 "error: could not add license to \`$PROJECT_NAME'"
+else
+    echo >&2 "${0##*/}: \`LICENSE' already exists, use -f/--force to overwrite"
+fi
+
