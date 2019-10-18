@@ -82,7 +82,7 @@ HELP_TEXT=\
 OPTIONS:
     -h,--help                 Print this info
 
-    -l,--list                 List names of available licenses
+    -l,--list                 Print license dir & available licenses
 
     --name <name>             Use specified full name. If not included,
                               \$LICENSE_FULLNAME will be used if it is
@@ -93,18 +93,16 @@ OPTIONS:
     --email <email>           Use specified email. If not included,
                               \$LICENSE_EMAIL, then git-config(1) will be
                               checked for a user email - if neither is
-                              defined, no contact info will be included
-                              alongside user's full name.
+                              defined, email is omitted
 
     --year <year>             Use specified copyright date. If not
                               included, \$LICENSE_YEAR will be used if
                               defined; otherwise output from date(1)
                               will be used as a fallback
 
-    --no-email                Forces email to be excluded from name even
-                              if one is defined in git-config(1) & can
-                              be found by the script; pretty much equiv.
-                              to \`--email ''\`
+    --no-email                Forces email to be dropped from name, even
+                              if one is defined in git-config(1) or in
+                              \$LICENSE_EMAIL
 
     -f,--force                Continue even if a \`LICENSE' file already
                               exists in the current working directory

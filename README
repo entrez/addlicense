@@ -12,7 +12,7 @@ USAGE: addlicense [ --name <name> ] [ --year <year> ] [ --email <email> ]
 OPTIONS:
     -h,--help                 Print this info
 
-    -l,--list                 List names of available licenses
+    -l,--list                 Print license dir & available licenses
 
     --name <name>             Use specified full name. If not included,
                               $LICENSE_FULLNAME will be used if it is
@@ -23,18 +23,16 @@ OPTIONS:
     --email <email>           Use specified email. If not included,
                               $LICENSE_EMAIL, then git-config(1) will be
                               checked for a user email - if neither is
-                              defined, no contact info will be included
-                              alongside user's full name.
+                              defined, email is omitted
 
     --year <year>             Use specified copyright date. If not
                               included, $LICENSE_YEAR will be used if
                               defined; otherwise output from date(1)
                               will be used as a fallback
 
-    --no-email                Forces email to be excluded from name even
-                              if one is defined in git-config(1) & can
-                              be found by the script; pretty much equiv.
-                              to `--email ''`
+    --no-email                Forces email to be dropped from name, even
+                              if one is defined in git-config(1) or in
+                              $LICENSE_EMAIL
 
     -f,--force                Continue even if a `LICENSE' file already
                               exists in the current working directory
@@ -44,7 +42,6 @@ OPTIONS:
                               `LICENSE' file in the current directory
 
 LICENSE FILES:
-
 License information comes from plain text files; each one should contain
 the text of a particular license (optionally including parameters [name],
 [fullname], and [year], which will be filled automatically) and should
@@ -55,9 +52,10 @@ may be available for download from <https://choosealicense.com>.
 $LICENSE_DIR may be set manually to a location containing these files;
 otherwise, the following locations will be checked in order until one of
 them is found to be an existing directory:
-    ~/.config/addlicense/LICENSES
-    ~/.addlicense/LICENSES
-    ~/.LICENSES
-    ~/LICENSES
-    /usr/local/share/LICENSES
-    /usr/share/LICENSES
+    $XDG_DATA_HOME/addlicense/LICENSES
+    $HOME/.local/share/addlicense/LICENSES
+    $HOME/.addlicense/LICENSES
+    $HOME/.LICENSES
+    $XDG_DATA_DIRS/addlicense/LICENSES
+    /usr/local/share/addlicense/LICENSES
+    /usr/share/addlicense/LICENSES 
