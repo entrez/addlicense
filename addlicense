@@ -12,6 +12,28 @@ LICENSE=
     || EMAIL="$(git config --get user.email 2>/dev/null \
                   || echo '')"
 
+POSSIBLE_LICENSEDIRS=\
+"$HOME/.config/addlicense/LICENSES
+$HOME/.addlicense/LICENSES
+$HOME/.LICENSES
+$HOME/LICENSES
+/usr/local/share/LICENSES
+/usr/share/LICENSES"
+LICENSE_HELP=\
+"LICENSE FILES:
+
+License information comes from plain text files; each one should contain
+the text of a particular license (optionally including parameters [name],
+[fullname], and [year], which will be filled automatically) and should
+have a filename corresponding to that license's name (e.g. \`mit.txt') or
+some other recognizable nickname or identifier. Licenses in this format
+may be available for download from <https://choosealicense.com>.
+
+\$LICENSE_DIR may be set manually to a location containing these files;
+otherwise, the following locations will be checked in order until one of
+them is found to be an existing directory:
+$(for D in $POSSIBLE_LICENSEDIRS; do echo "    ${D//$HOME/~}"; done)"
+
 # if $LICENSE_DIR is not set already by the user, check for
 # potential locations in the following order of preference:
 # 1. ~/.config/addlicense/LICENSES
@@ -21,50 +43,59 @@ LICENSE=
 # 5. /usr/local/share/LICENSES
 # 6. /usr/share/LICENSES
 if [ -z "$LICENSE_DIR" ]; then 
-    [ -d "$HOME/.config/addlicense/LICENSES" ] \
-      && LICENSE_DIR="$HOME/.config/addlicense/LICENSES" \
-      || [ -d "$HOME/.addlicense/LICENSES" ] \
-      && LICENSE_DIR="$HOME/.addlicense/LICENSES" \
-      || [ -d "$HOME/.LICENSES" ] \
-      && LICENSE_DIR="$HOME/.LICENSES" \
-      || [ -d "$HOME/LICENSES" ] \
-      && LICENSE_DIR="$HOME/LICENSES" \
-      || [ -d "/usr/local/share/LICENSES" ] \
-      && LICENSE_DIR="/usr/local/share/LICENSES" \
-      || [ -d "/usr/share/LICENSES" ] \
-      && LICENSE_DIR="/usr/share/LICENSES"
+    for LDIR in $POSSIBLE_LICENSEDIRS; do
+        [ -d "$LDIR" ] && LICENSE_DIR="$LDIR"
+        break
+    done
 fi
-LICENSE_OPTIONS="$(ls $LICENSE_DIR | sed 's/\..*$//g' | xargs | fmt -w 73)"
+
+if [ -z "$LICENSE_DIR" ]; then
+    LICENSE_OPTIONS="[none]
+
+$LICENSE_HELP"
+else
+    LICENSE_OPTIONS="$(ls $LICENSE_DIR | sed 's/\..*$//g' | xargs | fmt -w 73)"
+fi
+
 HELP_TEXT=\
 "USAGE: ${0##*/} [ --name <name> ] [ --year <year> ] [ --email <email> ]
             [ -f | --force ] [ --no-email ] [ --dry-run ] <license name>
        ${0##*/} [ -l | --list ]
+
 OPTIONS:
     -h,--help                 Print this info
+
     -l,--list                 List names of available licenses
+
     --name <name>             Use specified full name. If not included,
                               \$LICENSE_FULLNAME will be used if it is
                               defined; otherwise various programs will
                               be used in an attempt to guess the user's
                               name: git-config(1), id(1), whoami(1), etc
+
     --email <email>           Use specified email. If not included,
                               \$LICENSE_EMAIL, then git-config(1) will be
                               checked for a user email - if neither is
                               defined, no contact info will be included
                               alongside user's full name.
+
     --year <year>             Use specified copyright date. If not
                               included, \$LICENSE_YEAR will be used if
                               defined; otherwise output from date(1)
                               will be used as a fallback
+
     --no-email                Forces email to be excluded from name even
                               if one is defined in git-config(1) & can
                               be found by the script; pretty much equiv.
                               to \`--email ''\`
+
     -f,--force                Continue even if a \`LICENSE' file already
                               exists in the current working directory
+
     --dry-run                 Print the license, name, etc to be used,
                               but do not actually create or overwrite a
                               \`LICENSE' file in the current directory
+
 AVAILABLE LICENSES:
 $LICENSE_OPTIONS"
 
@@ -76,7 +107,8 @@ while [ $# -gt 0 ]; do
             exit 1
             ;;
         -h|--help)
-            echo >&2 "${0##*/}: add a license to the current directory"
+            echo >&2 "${0##*/}: add a license file to a project in the current directory"
+            echo >&2
             echo >&2 "$HELP_TEXT"; exit
             ;;
         --name)
@@ -111,6 +143,7 @@ while [ $# -gt 0 ]; do
             ;;
         -*)
             echo >&2 "${0##*/}: option not recognized: $1"
+            echo >&2
             echo >&2 "$HELP_TEXT"
             exit 1
             ;;
@@ -120,6 +153,7 @@ while [ $# -gt 0 ]; do
                 exit 1
             elif ! ls "$LICENSE_DIR" | grep $1 &>/dev/null; then
                 echo >&2 "${0##*/}: license \`$1' not available"
+                echo >&2
                 echo >&2 "AVAILABLE LICENSES:"
                 echo >&2 "$LICENSE_OPTIONS"
                 exit 1
@@ -131,10 +165,14 @@ while [ $# -gt 0 ]; do
     shift
 done
 
+
 [ -n "$EMAIL" ] && [ "$BLOCKEMAIL" = 'no' ] && EMAIL=" <${EMAIL}>" || EMAIL=''
 if [ -z "$LICENSE" ]; then
-    echo >&2 "${0##*/}: you must specify a license name"
-    echo >&2 "$HELP_TEXT"; exit 1
+    echo >&2 "${0##*/}: you must specify a license name; see --help for more info"
+    exit 1
+elif [ -z "$LICENSE_DIR" ]; then
+    echo >&2 "${0##*/}: license directory is missing; see --help for more info"
+    exit 1
 fi
 
 if [ ! -e ./LICENSE ] || [ "$USETHEFORCE" = 'yes' ]; then
@@ -142,11 +180,11 @@ if [ ! -e ./LICENSE ] || [ "$USETHEFORCE" = 'yes' ]; then
     echo >&2 "© $YEAR by ${NAME}${EMAIL}"
     echo >&2 "license: $LICENSE"
     [ "$DRYRUN" = 'no' ] && \
-      sed "s/\[fullname\]/${NAME}${EMAIL}/g;s/\[year\]/$YEAR/g" <"$HOME/src/LICENSES/$LICENSE" \
+      sed -E "s/\[(full)?name\]/${NAME}${EMAIL}/g;s/\[year\]/$YEAR/g" <"$LICENSE_DIR" \
         | fmt -w 74 > ./LICENSE \
         && echo >&2 "success: added license to \`$PROJECT_NAME'" \
         || echo >&2 "error: could not add license to \`$PROJECT_NAME'"
 else
-    echo >&2 "${0##*/}: \`LICENSE' already exists, use -f/--force to overwrite"
+    echo >&2 "${0##*/}: \`LICENSE' already exists, --force will overwrite"
 fi
 
