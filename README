@@ -10,6 +10,7 @@ USAGE: addlicense [ --name <name> ] [ --year <year> ] [ --email <email> ]
        addlicense [ -l | --list ]
 
 OPTIONS:
+
     -h,--help                 Print this info
 
     -l,--list                 Print license dir & available licenses
@@ -42,6 +43,7 @@ OPTIONS:
                               `LICENSE' file in the current directory
 
 LICENSE FILES:
+
 License information comes from plain text files; each one should contain
 the text of a particular license (optionally including parameters [name],
 [fullname], and [year], which will be filled automatically) and should
@@ -52,10 +54,10 @@ may be available for download from <https://choosealicense.com>.
 $LICENSE_DIR may be set manually to a location containing these files;
 otherwise, the following locations will be checked in order until one of
 them is found to be an existing directory:
-    $XDG_DATA_HOME/addlicense/LICENSES
-    $HOME/.local/share/addlicense/LICENSES
-    $HOME/.addlicense/LICENSES
-    $HOME/.LICENSES
-    $XDG_DATA_DIRS/addlicense/LICENSES
-    /usr/local/share/addlicense/LICENSES
-    /usr/share/addlicense/LICENSES 
+    $XDG_DATA_HOME/addlicense/licenses
+    $HOME/.local/share/addlicense/licenses
+    $HOME/.addlicense/licenses
+    $HOME/.licenses
+    $XDG_DATA_DIRS/addlicense/licenses
+    /usr/local/share/addlicense/licenses
+    /usr/share/addlicense/licenses 

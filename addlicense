@@ -13,18 +13,18 @@ LICENSE=
                   || echo '')"
 
 POSSIBLE_LICENSEDIRS=\
-"\$HOME/.local/share/addlicense/LICENSES
-\$HOME/.addlicense/LICENSES
-\$HOME/.LICENSES"
+"\$HOME/.local/share/addlicense/licenses
+\$HOME/.addlicense/licenses
+\$HOME/.licenses"
 
 [ -n "$XDG_DATA_DIRS" ] && \
     XDG_LICENSEDIRS="
-$( tr <<<"$XDG_DATA_DIRS" ':' $'\n' | xargs -I % echo %/addlicense/LICENSES )
-/usr/local/share/addlicense/LICENSES
-/usr/share/addlicense/LICENSES" \
+$( tr <<<"$XDG_DATA_DIRS" ':' $'\n' | xargs -I % echo %/addlicense/licenses )
+/usr/local/share/addlicense/licenses
+/usr/share/addlicense/licenses" \
     || XDG_LICENSEDIRS='
-/usr/local/share/addlicense/LICENSES
-/usr/share/addlicense/LICENSES'
+/usr/local/share/addlicense/licenses
+/usr/share/addlicense/licenses'
 
 LICENSE_HELP=\
 "LICENSE FILES:
@@ -38,25 +38,25 @@ may be available for download from <https://choosealicense.com>.
 \$LICENSE_DIR may be set manually to a location containing these files;
 otherwise, the following locations will be checked in order until one of
 them is found to be an existing directory:
-    \$XDG_DATA_HOME/addlicense/LICENSES
+    \$XDG_DATA_HOME/addlicense/licenses
 $(for D in $POSSIBLE_LICENSEDIRS; do echo "    ${D//$HOME/~}"; done)
-    \$XDG_DATA_DIRS/addlicense/LICENSES
-    /usr/local/share/addlicense/LICENSES
-    /usr/share/addlicense/LICENSES "
+    \$XDG_DATA_DIRS/addlicense/licenses
+    /usr/local/share/addlicense/licenses
+    /usr/share/addlicense/licenses "
 
-[ -n "$XDG_DATA_HOME" ] && POSSIBLE_LICENSEDIRS="\$XDG_DATA_HOME/addlicense/LICENSES
+[ -n "$XDG_DATA_HOME" ] && POSSIBLE_LICENSEDIRS="\$XDG_DATA_HOME/addlicense/licenses
 $POSSIBLE_LICENSEDIRS"
 
 # if $LICENSE_DIR is not set already by the user, check for
 # potential locations in the following order of preference:
-# $XDG_DATA_HOME/addlicense/LICENSES
-# $HOME/.local/share/addlicense/LICENSES
-# $HOME/.addlicense/LICENSES
-# $HOME/.LICENSES
-# $XDG_DATA_DIRS/addlicense/LICENSES
+# $XDG_DATA_HOME/addlicense/licenses
+# $HOME/.local/share/addlicense/licenses
+# $HOME/.addlicense/licenses
+# $HOME/.licenses
+# $XDG_DATA_DIRS/addlicense/licenses
 # (if not included in XDG_DATA_DIRS:
-# /usr/local/share/addlicense/LICENSES
-# /usr/share/addlicense/LICENSES)
+# /usr/local/share/addlicense/licenses
+# /usr/share/addlicense/licenses)
 if [ -z "$LICENSE_DIR" ]; then 
     for LDIR in ${POSSIBLE_LICENSEDIRS}${XDG_LICENSEDIRS}; do
         LDIR="$(eval echo $LDIR)"
