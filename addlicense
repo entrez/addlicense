@@ -28,7 +28,6 @@ $( tr <<<"$XDG_DATA_DIRS" ':' $'\n' | xargs -I % echo %/addlicense/LICENSES )
 
 LICENSE_HELP=\
 "LICENSE FILES:
-
 License information comes from plain text files; each one should contain
 the text of a particular license (optionally including parameters [name],
 [fullname], and [year], which will be filled automatically) and should
@@ -67,11 +66,12 @@ if [ -z "$LICENSE_DIR" ]; then
 fi
 
 if [ -z "$LICENSE_DIR" ]; then
-    LICENSE_OPTIONS="[none]
-
-$LICENSE_HELP"
+    LICENSE_OPTIONS='[none]'
+    LICENSECOUNT=''
 else
-    LICENSE_OPTIONS="$(ls $LICENSE_DIR | sed 's/\..*$//g' | xargs | fmt -w 73)"
+    LICENSE_OPTIONS="$(ls $LICENSE_DIR | sed 's/\..*$//g' | xargs -I % echo \"%\" | fmt -w 73)"
+    [ "${#LICENSE_OPTIONS}" -eq 0 ] && LICENSE_OPTIONS='[none]' && LICENSECOUNT=' (0)' \
+    || LICENSECOUNT=" ($(awk '{ print NF }' <<<"$LICENSE_OPTIONS"))"
 fi
 
 HELP_TEXT=\
@@ -113,12 +113,25 @@ OPTIONS:
                               but do not actually create or overwrite a
                               \`LICENSE' file in the current directory
 
-AVAILABLE LICENSES:
+LICENSE DIRECTORY:
+$([ -n "$LICENSE_DIR" ] && echo "    ${LICENSE_DIR//$HOME/~}" || echo "[not found]")
+
+AVAILABLE LICENSES${LICENSECOUNT}:
 $LICENSE_OPTIONS"
 
 while [ $# -gt 0 ]; do
     case "$1" in
         -l|--list)
+            [ -n "$LICENSE_DIR" ] && echo >&2 "LICENSE DIRECTORY:
+    ${LICENSE_DIR//$HOME/~}" || cat >&2 <<EOF
+Run \`${0##*/} --help\` for details about how to make license files
+available for this script to find and access, plus some advice regarding
+where they can be found for download online.
+
+LICENSE DIRECTORY:
+[not found]
+EOF
+            echo >&2
             echo >&2 "AVAILABLE LICENSES:"
             echo >&2 "$LICENSE_OPTIONS"
             exit 1
@@ -126,7 +139,9 @@ while [ $# -gt 0 ]; do
         -h|--help)
             echo >&2 "${0##*/}: add a license file to a project in the current directory"
             echo >&2
-            echo >&2 "$HELP_TEXT"; exit
+            echo >&2 "$HELP_TEXT"
+            [ -z "$LICENSE_DIR" ] && echo >&2 && echo >&2 "$LICENSE_HELP"
+            exit
             ;;
         --name)
             if [ -z "$2" ]; then
