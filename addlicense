@@ -159,6 +159,11 @@ while [ $# -gt 0 ]; do
                 exit 1
             else
                 LICENSE="$(ls "$LICENSE_DIR" | grep --color=none -E "^$1(\..*)?")"
+                if [ "$(wc -l <<<"$LICENSE")" -gt 1 ]; then
+                    echo >&2 "${0##*/}: ambiguous license name"
+                    echo >&2 "\`$1' could refer to: $(xargs <<<$(for L in $LICENSE; do echo "${L%.*}"; done))"
+                    exit 1
+                fi
             fi
             ;;
     esac
@@ -178,7 +183,7 @@ fi
 if [ ! -e ./LICENSE ] || [ "$USETHEFORCE" = 'yes' ]; then
     PROJECT_NAME="$(pwd | sed -E 's/^.*\/([^/]*)\/?/\1/')"
     echo >&2 "© $YEAR by ${NAME}${EMAIL}"
-    echo >&2 "license: $LICENSE"
+    echo >&2 "license: ${LICENSE%.*}"
     [ "$DRYRUN" = 'no' ] && \
       sed <"$LICENSE_DIR/$LICENSE" -E "s/\[(full)?name\]/${NAME}${EMAIL}/g;s/\[year\]/$YEAR/g" \
         | fmt -w 74 > ./LICENSE \
