@@ -13,12 +13,19 @@ LICENSE=
                   || echo '')"
 
 POSSIBLE_LICENSEDIRS=\
-"$HOME/.config/addlicense/LICENSES
-$HOME/.addlicense/LICENSES
-$HOME/.LICENSES
-$HOME/LICENSES
-/usr/local/share/LICENSES
-/usr/share/LICENSES"
+"\$HOME/.local/share/addlicense/LICENSES
+\$HOME/.addlicense/LICENSES
+\$HOME/.LICENSES"
+
+[ -n "$XDG_DATA_DIRS" ] && \
+    XDG_LICENSEDIRS="
+$( tr <<<"$XDG_DATA_DIRS" ':' $'\n' | xargs -I % echo %/addlicense/LICENSES )
+/usr/local/share/addlicense/LICENSES
+/usr/share/addlicense/LICENSES" \
+    || XDG_LICENSEDIRS='
+/usr/local/share/addlicense/LICENSES
+/usr/share/addlicense/LICENSES'
+
 LICENSE_HELP=\
 "LICENSE FILES:
 
@@ -32,18 +39,28 @@ may be available for download from <https://choosealicense.com>.
 \$LICENSE_DIR may be set manually to a location containing these files;
 otherwise, the following locations will be checked in order until one of
 them is found to be an existing directory:
-$(for D in $POSSIBLE_LICENSEDIRS; do echo "    ${D//$HOME/~}"; done)"
+    \$XDG_DATA_HOME/addlicense/LICENSES
+$(for D in $POSSIBLE_LICENSEDIRS; do echo "    ${D//$HOME/~}"; done)
+    \$XDG_DATA_DIRS/addlicense/LICENSES
+    /usr/local/share/addlicense/LICENSES
+    /usr/share/addlicense/LICENSES "
+
+[ -n "$XDG_DATA_HOME" ] && POSSIBLE_LICENSEDIRS="\$XDG_DATA_HOME/addlicense/LICENSES
+$POSSIBLE_LICENSEDIRS"
 
 # if $LICENSE_DIR is not set already by the user, check for
 # potential locations in the following order of preference:
-# 1. ~/.config/addlicense/LICENSES
-# 2. ~/.addlicense/LICENSES
-# 3. ~/.LICENSES
-# 4. ~/LICENSES
-# 5. /usr/local/share/LICENSES
-# 6. /usr/share/LICENSES
+# $XDG_DATA_HOME/addlicense/LICENSES
+# $HOME/.local/share/addlicense/LICENSES
+# $HOME/.addlicense/LICENSES
+# $HOME/.LICENSES
+# $XDG_DATA_DIRS/addlicense/LICENSES
+# (if not included in XDG_DATA_DIRS:
+# /usr/local/share/addlicense/LICENSES
+# /usr/share/addlicense/LICENSES)
 if [ -z "$LICENSE_DIR" ]; then 
-    for LDIR in $POSSIBLE_LICENSEDIRS; do
+    for LDIR in ${POSSIBLE_LICENSEDIRS}${XDG_LICENSEDIRS}; do
+        LDIR="$(eval echo $LDIR)"
         [ -d "$LDIR" ] && LICENSE_DIR="$LDIR"
         break
     done
