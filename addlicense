@@ -226,11 +226,11 @@ EOF
 done
 
 [ -n "$EMAIL" ] && [ "$BLOCKEMAIL" = 'no' ] && EMAIL=" <${EMAIL}>" || EMAIL=''
-if [ -z "$LICENSE" ]; then
-    printf >&2 '%s: you must specify a license name; see --help for more info\n' "$SCRIPTNAME"
-    exit 1
-elif [ -z "$LICENSE_DIR" ]; then
+if [ -z "$LICENSE_DIR" ]; then
     printf >&2 '%s: license directory is missing; see --help for more info\n' "$SCRIPTNAME"
+    exit 1
+elif [ -z "$LICENSE" ]; then
+    printf >&2 '%s: you must specify a license name; see --help for more info\n' "$SCRIPTNAME"
     exit 1
 fi
 
