@@ -1,25 +1,34 @@
 #!/usr/bin/env sh
 
+format_dirlist ( ) {
+[ $# -lt 1 ] && echo "$0: missing argument" && exit
+for D in $1; do
+    expr "$D" : '^$HOME' &>/dev/null && D="~`expr "$D" : '^$HOME\(.*\)'`"
+    printf '    %s\n' "$D"
+done
+}
+
+SCRIPTNAME="`echo "$0" | sed 's/^.*\///'`"
 DRYRUN='no'; USETHEFORCE='no'; BLOCKEMAIL='no'
 LICENSE=
 [ -n "$LICENSE_YEAR" ] && YEAR="$LICENSE_YEAR" \
-    || YEAR="$(date +%Y || echo '20xx')"
+    || YEAR="`date +%Y || echo '20xx'`"
 [ -n "$LICENSE_FULLNAME" ] && NAME="$LICENSE_FULLNAME" \
-    || NAME="$(git config --get user.name 2>/dev/null \
-                 || id -F 2>/dev/null || id -un 2>/dev/null \
-                 || whoami || echo 'the project author(s)')"
+    || NAME="`git config --get user.name 2>/dev/null \
+    || id -F 2>/dev/null || id -un 2>/dev/null \
+    || whoami || echo 'the project author(s)'`"
 [ -n "$LICENSE_EMAIL" ] && EMAIL="$LICENSE_EMAIL" \
-    || EMAIL="$(git config --get user.email 2>/dev/null \
-                  || echo '')"
+    || EMAIL="`git config --get user.email 2>/dev/null \
+    || echo ''`"
 
 POSSIBLE_LICENSEDIRS=\
-"\$HOME/.local/share/addlicense/licenses
-\$HOME/.addlicense/licenses
-\$HOME/.licenses"
+'$HOME/.local/share/addlicense/licenses
+$HOME/.addlicense/licenses
+$HOME/.licenses'
 
 [ -n "$XDG_DATA_DIRS" ] && \
     XDG_LICENSEDIRS="
-$( tr <<<"$XDG_DATA_DIRS" ':' $'\n' | xargs -I % echo %/addlicense/licenses )
+`echo "$XDG_DATA_DIRS" | tr ':' '\n' | xargs -I % echo %/addlicense/licenses` 
 /usr/local/share/addlicense/licenses
 /usr/share/addlicense/licenses" \
     || XDG_LICENSEDIRS='
@@ -39,7 +48,7 @@ may be available for download from <https://choosealicense.com>.
 otherwise, the following locations will be checked in order until one of
 them is found to be an existing directory:
     \$XDG_DATA_HOME/addlicense/licenses
-$(for D in $POSSIBLE_LICENSEDIRS; do echo "    ${D//$HOME/~}"; done)
+`format_dirlist "$POSSIBLE_LICENSEDIRS"`
     \$XDG_DATA_DIRS/addlicense/licenses
     /usr/local/share/addlicense/licenses
     /usr/share/addlicense/licenses "
@@ -59,7 +68,7 @@ $POSSIBLE_LICENSEDIRS"
 # /usr/share/addlicense/licenses)
 if [ -z "$LICENSE_DIR" ]; then 
     for LDIR in ${POSSIBLE_LICENSEDIRS}${XDG_LICENSEDIRS}; do
-        LDIR="$(eval echo $LDIR)"
+        LDIR="`eval printf %s $LDIR`"
         [ -d "$LDIR" ] && LICENSE_DIR="$LDIR"
         break
     done
@@ -69,15 +78,16 @@ if [ -z "$LICENSE_DIR" ]; then
     LICENSE_OPTIONS='[none]'
     LICENSECOUNT=''
 else
-    LICENSE_OPTIONS="$(ls $LICENSE_DIR | sed 's/\..*$//g' | xargs -I % echo \"%\" | fmt -w 73)"
-    [ "${#LICENSE_OPTIONS}" -eq 0 ] && LICENSE_OPTIONS='[none]' && LICENSECOUNT=' (0)' \
-    || LICENSECOUNT=" ($(awk '{ print NF }' <<<"$LICENSE_OPTIONS"))"
+    LICENSE_OPTIONS="`ls $LICENSE_DIR | sed 's/^\(.*\)\..*$/\1/g' | xargs -I _ printf "'%s' " _ | fmt -w 73`"
+    [ "`printf %s "$LICENSE_OPTIONS" | awk '{ print length }'`" -eq 0 ] \
+        && LICENSE_OPTIONS='[none]' && LICENSECOUNT=' (0)' \
+        || LICENSECOUNT=" (`printf %s "$LICENSE_OPTIONS" | awk '{ print NF }'` valid files found)"
 fi
 
 HELP_TEXT=\
-"USAGE: ${0##*/} [ --name <name> ] [ --year <year> ] [ --email <email> ]
+"USAGE: $SCRIPTNAME [ --name <name> ] [ --year <year> ] [ --email <email> ]
             [ -f | --force ] [ --no-email ] [ --dry-run ] <license name>
-       ${0##*/} [ -l | --list ]
+       $SCRIPTNAME [ -l | --list ]
 
 OPTIONS:
     -h,--help                 Print this info
@@ -112,7 +122,14 @@ OPTIONS:
                               \`LICENSE' file in the current directory
 
 LICENSE DIRECTORY:
-$([ -n "$LICENSE_DIR" ] && echo "    ${LICENSE_DIR//$HOME/~}" || echo "[not found]")
+`if [ -z "$LICENSE_DIR" ]; then
+    printf %s '[not found]'
+elif expr &>/dev/null "$LICENSE_DIR" : "^$HOME"; then
+    printf %s '~'
+    expr "$LICENSE_DIR" : "^$HOME\(.*\)"
+else
+    printf '%s' "$LICENSE_DIR"
+fi`
 
 AVAILABLE LICENSES${LICENSECOUNT}:
 $LICENSE_OPTIONS"
@@ -120,44 +137,51 @@ $LICENSE_OPTIONS"
 while [ $# -gt 0 ]; do
     case "$1" in
         -l|--list)
-            [ -n "$LICENSE_DIR" ] && echo >&2 "LICENSE DIRECTORY:
-    ${LICENSE_DIR//$HOME/~}" || cat >&2 <<EOF
-Run \`${0##*/} --help\` for details about how to make license files
-available for this script to find and access, plus some advice regarding
-where they can be found for download online.
+            if [ -z "$LICENSE_DIR" ]; then
+                LICENSEDIR_DISP='[not found]'
+                cat >&2 <<EOF
+Run \`$SCRIPTNAME --help\` for details regarding how to make license files
+accessible for this script to find and use, plus advice on sites where
+appropriately formatted copies of various licenses may be available for
+download on the Web.
 
-LICENSE DIRECTORY:
-[not found]
 EOF
-            echo >&2
-            echo >&2 "AVAILABLE LICENSES:"
-            echo >&2 "$LICENSE_OPTIONS"
+            elif expr &>/dev/null "$LICENSE_DIR" : "^$HOME"; then
+                LICENSEDIR_DISP="~`expr "$LICENSE_DIR" : "^$HOME\(.*\)"`"
+            else
+                LICENSEDIR_DISP="$LICENSE_DIR"
+            fi
+
+            printf >&2 'LICENSE DIRECTORY:\n%s\n\nAVAILABLE LICENSES%s:\n%s\n' \
+                "$LICENSEDIR_DISP" "$LICENSECOUNT" "$LICENSE_OPTIONS"
             exit 1
             ;;
         -h|--help)
-            echo >&2 "${0##*/}: add a license file to a project in the current directory"
-            echo >&2
-            echo >&2 "$HELP_TEXT"
-            [ -z "$LICENSE_DIR" ] && echo >&2 && echo >&2 "$LICENSE_HELP"
+            printf >&2 '%s: add a license file to the current directory\n\n%s\n' \
+                "$SCRIPTNAME" "$HELP_TEXT"
+            [ -z "$LICENSE_DIR" ] && printf >&2 '\n%s\n' "$LICENSE_HELP"
             exit
             ;;
         --name)
             if [ -z "$2" ]; then
-                echo >&2 "${0##*/}: option $1 requires argument <name>"
+                printf >&2 '%s: option %s requires argument <%s>\n' \
+                    "$SCRIPTNAME" "$1" 'name'
             else
                 NAME="$2"; shift
             fi
             ;;
         --email)
             if [ -z "$2" ]; then
-                echo >&2 "${0##*/}: option $1 requires argument <email>"
+                printf >&2 '%s: option %s requires argument <%s>\n' \
+                    "$SCRIPTNAME" "$1" 'email'
             else
                 EMAIL="$2"; shift
             fi
             ;;
         --year)
             if [ -z "$2" ]; then
-                echo >&2 "${0##*/}: option $1 requires argument <year>"
+                printf >&2 '%s: option %s requires argument <%s>\n' \
+                    "$SCRIPTNAME" "$1" 'year'
             else
                 YEAR="$2"; shift
             fi
@@ -172,26 +196,27 @@ EOF
             USETHEFORCE='yes'
             ;;
         -*)
-            echo >&2 "${0##*/}: option not recognized: $1"
-            echo >&2
-            echo >&2 "$HELP_TEXT"
+            printf >&2 '%s: option not recognized: %s\n' \
+                "$SCRIPTNAME" "$1"
             exit 1
             ;;
         *)
-            if [ -n "$LICENSE" ]; then
-                echo >&2 "${0##*/}: only specify one license name"
+            if [ -z "$LICENSE_DIR" ]; then
+                printf >&2 '%s: license directory is missing; see --help for more info\n' "$SCRIPTNAME"
+                exit 1
+            elif [ -n "$LICENSE" ]; then
+                printf >&2 '%s: only specify one license name\n' "$SCRIPTNAME"
                 exit 1
             elif ! ls "$LICENSE_DIR" | grep --color=none -E "^$1(\..*)?" &>/dev/null; then
-                echo >&2 "${0##*/}: license \`$1' not available"
-                echo >&2
-                echo >&2 "AVAILABLE LICENSES:"
-                echo >&2 "$LICENSE_OPTIONS"
+                printf >&2 '%s: license `%s'\'' not available\n\nAVAILABLE LICENSES:\n%s\n' \
+                    "$SCRIPTNAME" "$1" "$LICENSE_OPTIONS"
                 exit 1
             else
-                LICENSE="$(ls "$LICENSE_DIR" | grep --color=none -E "^$1(\..*)?")"
-                if [ "$(wc -l <<<"$LICENSE")" -gt 1 ]; then
-                    echo >&2 "${0##*/}: ambiguous license name"
-                    echo >&2 "\`$1' could refer to: $(xargs <<<$(for L in $LICENSE; do echo "${L%.*}"; done))"
+                LICENSE="`ls "$LICENSE_DIR" | grep --color=none -E "^$1(\..*)?"`"
+                if [ "`printf %s "$LICENSE" | wc -l`" -gt 1 ]; then
+                    printf >&2 '%s: ambiguous license name\n' "$SCRIPTNAME"
+                    printf >&2 '`%s'\'' could refer to:' "$1"
+                    printf >&2 ' %s' `for L in $LICENSE; do echo "`printf %s "$L" | sed 's/\..*$//'`"; done`
                     exit 1
                 fi
             fi
@@ -200,26 +225,26 @@ EOF
     shift
 done
 
-
 [ -n "$EMAIL" ] && [ "$BLOCKEMAIL" = 'no' ] && EMAIL=" <${EMAIL}>" || EMAIL=''
 if [ -z "$LICENSE" ]; then
-    echo >&2 "${0##*/}: you must specify a license name; see --help for more info"
+    printf >&2 '%s: you must specify a license name; see --help for more info\n' "$SCRIPTNAME"
     exit 1
 elif [ -z "$LICENSE_DIR" ]; then
-    echo >&2 "${0##*/}: license directory is missing; see --help for more info"
+    printf >&2 '%s: license directory is missing; see --help for more info\n' "$SCRIPTNAME"
     exit 1
 fi
 
-if [ ! -e ./LICENSE ] || [ "$USETHEFORCE" = 'yes' ]; then
-    PROJECT_NAME="$(pwd | sed -E 's/^.*\/([^/]*)\/?/\1/')"
-    echo >&2 "© $YEAR by ${NAME}${EMAIL}"
-    echo >&2 "license: ${LICENSE%.*}"
+OUTPUT_LOC=./LICENSE
+if [ ! -e $OUTPUT_LOC ] || [ "$USETHEFORCE" = 'yes' ]; then
+    PROJECT_NAME="`pwd | sed -E 's/^.*\/([^/]*)\/?/\1/'`"
+    printf >&2 '© %s by %s%s\n' "$YEAR" "$NAME" "$EMAIL"
+    printf >&2 'license: %s\n' "`printf %s "$LICENSE" | sed 's/\..*$//'`"
     [ "$DRYRUN" = 'no' ] && \
       sed <"$LICENSE_DIR/$LICENSE" -E "s/\[(full)?name\]/${NAME}${EMAIL}/g;s/\[year\]/$YEAR/g" \
         | fmt -w 74 > ./LICENSE \
-        && echo >&2 "success: added license to \`$PROJECT_NAME'" \
-        || echo >&2 "error: could not add license to \`$PROJECT_NAME'"
+        && printf >&2 'success: added license\n' \
+        || printf >&2 'error: could not add license\n'
 else
-    echo >&2 "${0##*/}: \`LICENSE' already exists, --force will overwrite"
+    printf '>&2 %s: `%s'\'' already exists, use --force to overwrite\n' \
+        "$SCRIPTNAME" 'LICENSE'
 fi
-
