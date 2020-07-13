@@ -66,7 +66,8 @@ $POSSIBLE_LICENSEDIRS"
 # (if not included in XDG_DATA_DIRS:
 # /usr/local/share/addlicense/licenses
 # /usr/share/addlicense/licenses)
-if [ -z "$LICENSE_DIR" ]; then 
+if [ -z "$LICENSE_DIR" ]
+then 
     for LDIR in ${POSSIBLE_LICENSEDIRS}${XDG_LICENSEDIRS}; do
         LDIR="`eval printf %s $LDIR`"
         [ -d "$LDIR" ] && LICENSE_DIR="$LDIR"
@@ -74,7 +75,8 @@ if [ -z "$LICENSE_DIR" ]; then
     done
 fi
 
-if [ -z "$LICENSE_DIR" ]; then
+if [ -z "$LICENSE_DIR" ]
+then
     LICENSE_OPTIONS='[none]'
     LICENSECOUNT=''
 else
@@ -82,7 +84,7 @@ else
     [ "`printf %s "$LICENSE_OPTIONS" | awk '{ print length }'`" -eq 0 ] \
         && LICENSE_OPTIONS='[none]' && LICENSECOUNT=' (0)' \
         || LICENSECOUNT=" (`printf %s "$LICENSE_OPTIONS" | awk '{ print NF }'` valid files found)"
-    LICENSE_OPTIONS="`printf '%s' "$LICENSE_OPTIONS" | fmt -w 73`"
+    LICENSE_OPTIONS="`printf '%s' "$LICENSE_OPTIONS" | fmt -w 74`"
 fi
 
 HELP_TEXT=\
@@ -133,9 +135,11 @@ OPTIONS:
                                 current working directory
 
 LICENSE DIRECTORY:
-`if [ -z "$LICENSE_DIR" ]; then
+`if [ -z "$LICENSE_DIR" ]
+then
     printf %s '[not found]'
-elif expr &>/dev/null "$LICENSE_DIR" : "^$HOME"; then
+elif expr &>/dev/null "$LICENSE_DIR" : "^$HOME"
+then
     printf %s '~'
     expr "$LICENSE_DIR" : "^$HOME\(.*\)"
 else
@@ -150,7 +154,8 @@ FORMAT_WIDTH=
 while [ $# -gt 0 ]; do
     case "$1" in
         -l|--list)
-            if [ -z "$LICENSE_DIR" ]; then
+            if [ -z "$LICENSE_DIR" ]
+            then
                 LICENSEDIR_DISP='[not found]'
                 cat >&2 <<EOF
 Run \`$SCRIPTNAME --help\` for details regarding how to make license files
@@ -159,7 +164,8 @@ appropriately formatted copies of various licenses may be available for
 download on the Web.
 
 EOF
-            elif expr &>/dev/null "$LICENSE_DIR" : "^$HOME"; then
+            elif expr &>/dev/null "$LICENSE_DIR" : "^$HOME"
+            then
                 LICENSEDIR_DISP="~`expr "$LICENSE_DIR" : "^$HOME\(.*\)"`"
             else
                 LICENSEDIR_DISP="$LICENSE_DIR"
@@ -176,7 +182,8 @@ EOF
             exit
             ;;
         --name)
-            if [ -z "$2" ]; then
+            if [ -z "$2" ]
+            then
                 printf >&2 '%s: option %s requires argument <%s>\n' \
                     "$SCRIPTNAME" "$1" 'name'
             else
@@ -184,7 +191,8 @@ EOF
             fi
             ;;
         --email)
-            if [ -z "$2" ]; then
+            if [ -z "$2" ]
+            then
                 printf >&2 '%s: option %s requires argument <%s>\n' \
                     "$SCRIPTNAME" "$1" 'email'
             else
@@ -192,7 +200,8 @@ EOF
             fi
             ;;
         --year)
-            if [ -z "$2" ]; then
+            if [ -z "$2" ]
+            then
                 printf >&2 '%s: option %s requires argument <%s>\n' \
                     "$SCRIPTNAME" "$1" 'year'
             else
@@ -209,7 +218,8 @@ EOF
             USETHEFORCE='yes'
             ;;
         -w|--format-width)
-            if [ -z "$2" ]; then
+            if [ -z "$2" ]
+            then
                 printf >&2 '%s: option %s requires argument <%s>\n' \
                     "$SCRIPTNAME" "$1" 'width'
             else
@@ -222,19 +232,23 @@ EOF
             exit 1
             ;;
         *)
-            if [ -z "$LICENSE_DIR" ]; then
+            if [ -z "$LICENSE_DIR" ]
+            then
                 printf >&2 '%s: license directory is missing; see --help for more info\n' "$SCRIPTNAME"
                 exit 1
-            elif [ -n "$LICENSE" ]; then
+            elif [ -n "$LICENSE" ]
+            then
                 printf >&2 '%s: only specify one license name\n' "$SCRIPTNAME"
                 exit 1
-            elif ! ls "$LICENSE_DIR" | grep --color=none -E "^$1(\..*)?" &>/dev/null; then
+            elif ! ls "$LICENSE_DIR" | grep --color=none -E "^$1(\..*)?" &>/dev/null
+            then
                 printf >&2 '%s: license `%s'\'' not available\n\nAVAILABLE LICENSES:\n%s\n' \
                     "$SCRIPTNAME" "$1" "$LICENSE_OPTIONS"
                 exit 1
             else
                 LICENSE="`ls "$LICENSE_DIR" | grep --color=none -E "^$1(\..*)?"`"
-                if [ "`printf %s "$LICENSE" | wc -l`" -gt 1 ]; then
+                if [ "`printf %s "$LICENSE" | wc -l`" -gt 1 ]
+                then
                     printf >&2 '%s: ambiguous license name\n' "$SCRIPTNAME"
                     printf >&2 '`%s'\'' could refer to:' "$1"
                     printf >&2 ' %s' `for L in $LICENSE; do echo "`printf %s "$L" | sed 's/\..*$//'`"; done`
@@ -247,10 +261,12 @@ EOF
 done
 
 [ -n "$EMAIL" ] && [ "$BLOCKEMAIL" = 'no' ] && EMAIL=" <${EMAIL}>" || EMAIL=''
-if [ -z "$LICENSE_DIR" ]; then
+if [ -z "$LICENSE_DIR" ]
+then
     printf >&2 '%s: license directory is missing; see --help for more info\n' "$SCRIPTNAME"
     exit 1
-elif [ -z "$LICENSE" ]; then
+elif [ -z "$LICENSE" ]
+then
     printf >&2 '%s: you must specify a license name; see --help for more info\n' "$SCRIPTNAME"
     exit 1
 fi
