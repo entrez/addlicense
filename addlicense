@@ -78,10 +78,11 @@ if [ -z "$LICENSE_DIR" ]; then
     LICENSE_OPTIONS='[none]'
     LICENSECOUNT=''
 else
-    LICENSE_OPTIONS="`ls $LICENSE_DIR | sed 's/^\(.*\)\..*$/\1/g' | xargs -I _ printf "'%s' " _ | fmt -w 73`"
+    LICENSE_OPTIONS="`ls $LICENSE_DIR | sed 's/^\(.*\)\..*$/\1/g' | xargs -I _ printf "'%s' " _`"
     [ "`printf %s "$LICENSE_OPTIONS" | awk '{ print length }'`" -eq 0 ] \
         && LICENSE_OPTIONS='[none]' && LICENSECOUNT=' (0)' \
         || LICENSECOUNT=" (`printf %s "$LICENSE_OPTIONS" | awk '{ print NF }'` valid files found)"
+    LICENSE_OPTIONS="`printf '%s' "$LICENSE_OPTIONS" | fmt -w 73`"
 fi
 
 HELP_TEXT=\
