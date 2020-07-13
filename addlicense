@@ -42,7 +42,11 @@ the text of a particular license (optionally including parameters [name],
 [fullname], and [year], which will be filled automatically) and should
 have a filename corresponding to that license's name (e.g. \`mit.txt') or
 some other recognizable nickname or identifier. Licenses in this format
-may be available for download from <https://choosealicense.com>.
+may be available for download from <https://choosealicense.com>;
+alternatively, when you downloaded this repository it may have included a
+compressed archive including several licenses. If you don't have this
+file, the versions hosted at <https://gitlab.com/entrez/addlicense/> and
+<https://github.com/entrez/addlicense/> should include it.
 
 \$LICENSE_DIR may be set manually to a location containing these files;
 otherwise, the following locations will be checked in order until one of
