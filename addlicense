@@ -256,7 +256,7 @@ elif [ -z "$LICENSE" ]; then
 fi
 
 OUTPUT_LOC=./LICENSE
-if [ ! -e $OUTPUT_LOC ] || [ "$USETHEFORCE" = 'yes' ]; then
+if [ ! -e $OUTPUT_LOC ] || [ "$USETHEFORCE" = 'yes' ] || [ "$DRYRUN" = 'yes' ]; then
     PROJECT_NAME="`pwd | sed -E 's/^.*\/([^/]*)\/?/\1/'`"
     printf >&2 '© %s by %s%s\n' "$YEAR" "$NAME" "$EMAIL"
     printf >&2 'license: %s\n' "`printf %s "$LICENSE" | sed 's/\..*$//'`"
