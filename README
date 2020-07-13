@@ -6,50 +6,62 @@
              quickly add a license to your current directory 
 
 USAGE: addlicense [ --name <name> ] [ --year <year> ] [ --email <email> ]
-            [ -f | --force ] [ --no-email ] [ --dry-run ] <license name>
+            [ -w | --format-width <width> ] [ -f | --force ] [ --no-email ]
+            [ --dry-run ] <license name>
        addlicense [ -l | --list ]
 
 OPTIONS:
+    -h,--help                   Print this info
 
-    -h,--help                 Print this info
+    -l,--list                   Print license dir & available licenses
 
-    -l,--list                 Print license dir & available licenses
+    --name <name>               Use specified full name. If not included,
+                                $LICENSE_FULLNAME will be used if it is
+                                defined; otherwise various programs will
+                                be used in an attempt to guess the user's
+                                name: git-config(1), id(1), whoami(1),
+                                etc
 
-    --name <name>             Use specified full name. If not included,
-                              $LICENSE_FULLNAME will be used if it is
-                              defined; otherwise various programs will
-                              be used in an attempt to guess the user's
-                              name: git-config(1), id(1), whoami(1), etc
+    --year <year>               Use specified copyright date. If not
+                                included, $LICENSE_YEAR will be used if
+                                defined; otherwise output from date(1)
+                                will be used as a fallback
 
-    --email <email>           Use specified email. If not included,
-                              $LICENSE_EMAIL, then git-config(1) will be
-                              checked for a user email - if neither is
-                              defined, email is omitted
+    --email <email>             Use specified email. If not included,
+                                $LICENSE_EMAIL, then git-config(1) will
+                                be checked for a user email - if neither
+                                is defined, email is omitted
 
-    --year <year>             Use specified copyright date. If not
-                              included, $LICENSE_YEAR will be used if
-                              defined; otherwise output from date(1)
-                              will be used as a fallback
+    --no-email                  Forces email to be dropped from name,
+                                even if one is defined in git-config(1)
+                                or in $LICENSE_EMAIL
 
-    --no-email                Forces email to be dropped from name, even
-                              if one is defined in git-config(1) or in
-                              $LICENSE_EMAIL
+    -w,--format-width <width>   Pipes the license text through fmt(1)
+                                prior to output, using the provided
+                                number of cols/characters as the text
+                                width.
 
-    -f,--force                Continue even if a `LICENSE' file already
-                              exists in the current working directory
+    -f,--force                  Continue even if a `LICENSE' file
+                                already exists in the current working
+                                directory
 
-    --dry-run                 Print the license, name, etc to be used,
-                              but do not actually create or overwrite a
-                              `LICENSE' file in the current directory
+    --dry-run                   Print the license, name, etc to be used,
+                                as well as the license text itself, to
+                                STDOUT, but do not actually create or
+                                overwrite a `LICENSE' file in the
+                                current working directory
 
 LICENSE FILES:
-
 License information comes from plain text files; each one should contain
 the text of a particular license (optionally including parameters [name],
 [fullname], and [year], which will be filled automatically) and should
 have a filename corresponding to that license's name (e.g. `mit.txt') or
 some other recognizable nickname or identifier. Licenses in this format
-may be available for download from <https://choosealicense.com>.
+may be available for download from <https://choosealicense.com>;
+alternatively, when you downloaded this repository it may have included a
+compressed archive including several licenses. If you don't have this
+file, the versions hosted at <https://gitlab.com/entrez/addlicense/> and
+<https://github.com/entrez/addlicense/> should include it.
 
 $LICENSE_DIR may be set manually to a location containing these files;
 otherwise, the following locations will be checked in order until one of
