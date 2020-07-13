@@ -246,6 +246,6 @@ if [ ! -e $OUTPUT_LOC ] || [ "$USETHEFORCE" = 'yes' ]; then
         && printf >&2 'success: added license\n' \
         || printf >&2 'error: could not add license\n'
 else
-    printf '>&2 %s: `%s'\'' already exists, use --force to overwrite\n' \
+    printf >&2 '%s: `%s'\'' already exists, use --force to overwrite\n' \
         "$SCRIPTNAME" 'LICENSE'
 fi
