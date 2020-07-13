@@ -87,40 +87,50 @@ fi
 
 HELP_TEXT=\
 "USAGE: $SCRIPTNAME [ --name <name> ] [ --year <year> ] [ --email <email> ]
-            [ -f | --force ] [ --no-email ] [ --dry-run ] <license name>
+            [ -w | --format-width <width> ] [ -f | --force ] [ --no-email ]
+            [ --dry-run ] <license name>
        $SCRIPTNAME [ -l | --list ]
 
 OPTIONS:
-    -h,--help                 Print this info
+    -h,--help                   Print this info
 
-    -l,--list                 Print license dir & available licenses
+    -l,--list                   Print license dir & available licenses
 
-    --name <name>             Use specified full name. If not included,
-                              \$LICENSE_FULLNAME will be used if it is
-                              defined; otherwise various programs will
-                              be used in an attempt to guess the user's
-                              name: git-config(1), id(1), whoami(1), etc
+    --name <name>               Use specified full name. If not included,
+                                \$LICENSE_FULLNAME will be used if it is
+                                defined; otherwise various programs will
+                                be used in an attempt to guess the user's
+                                name: git-config(1), id(1), whoami(1),
+                                etc
 
-    --email <email>           Use specified email. If not included,
-                              \$LICENSE_EMAIL, then git-config(1) will be
-                              checked for a user email - if neither is
-                              defined, email is omitted
+    --year <year>               Use specified copyright date. If not
+                                included, \$LICENSE_YEAR will be used if
+                                defined; otherwise output from date(1)
+                                will be used as a fallback
 
-    --year <year>             Use specified copyright date. If not
-                              included, \$LICENSE_YEAR will be used if
-                              defined; otherwise output from date(1)
-                              will be used as a fallback
+    --email <email>             Use specified email. If not included,
+                                \$LICENSE_EMAIL, then git-config(1) will
+                                be checked for a user email - if neither
+                                is defined, email is omitted
 
-    --no-email                Forces email to be dropped from name, even
-                              if one is defined in git-config(1) or in
-                              \$LICENSE_EMAIL
+    --no-email                  Forces email to be dropped from name,
+                                even if one is defined in git-config(1)
+                                or in \$LICENSE_EMAIL
 
-    -f,--force                Continue even if a \`LICENSE' file already
-                              exists in the current working directory
+    -w,--format-width <width>   Pipes the license text through fmt(1)
+                                prior to output, using the provided
+                                number of cols/characters as the text
+                                width.
 
-    --dry-run                 Print the license, name, etc to be used,
-                              but do not actually create or overwrite a
-                              \`LICENSE' file in the current directory
+    -f,--force                  Continue even if a \`LICENSE' file
+                                already exists in the current working
+                                directory
+
+    --dry-run                   Print the license, name, etc to be used,
+                                as well as the license text itself, to
+                                STDOUT, but do not actually create or
+                                overwrite a \`LICENSE' file in the
+                                current working directory
 
 LICENSE DIRECTORY:
 `if [ -z "$LICENSE_DIR" ]; then
@@ -134,6 +144,8 @@ fi`
 
 AVAILABLE LICENSES${LICENSECOUNT}:
 $LICENSE_OPTIONS"
+
+FORMAT_WIDTH=
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -196,6 +208,14 @@ EOF
         -f|--force)
             USETHEFORCE='yes'
             ;;
+        -w|--format-width)
+            if [ -z "$2" ]; then
+                printf >&2 '%s: option %s requires argument <%s>\n' \
+                    "$SCRIPTNAME" "$1" 'width'
+            else
+                FORMAT_WIDTH="$2"; shift
+            fi
+            ;;
         -*)
             printf >&2 '%s: option not recognized: %s\n' \
                 "$SCRIPTNAME" "$1"
@@ -240,11 +260,17 @@ if [ ! -e $OUTPUT_LOC ] || [ "$USETHEFORCE" = 'yes' ]; then
     PROJECT_NAME="`pwd | sed -E 's/^.*\/([^/]*)\/?/\1/'`"
     printf >&2 '© %s by %s%s\n' "$YEAR" "$NAME" "$EMAIL"
     printf >&2 'license: %s\n' "`printf %s "$LICENSE" | sed 's/\..*$//'`"
-    [ "$DRYRUN" = 'no' ] && \
-      sed <"$LICENSE_DIR/$LICENSE" -E "s/\[(full)?name\]/${NAME}${EMAIL}/g;s/\[year\]/$YEAR/g" \
-        | fmt -w 74 > ./LICENSE \
-        && printf >&2 'success: added license\n' \
-        || printf >&2 'error: could not add license\n'
+
+    license_text="`sed <"$LICENSE_DIR/$LICENSE" -E "s/\[(full)?name\]/${NAME}${EMAIL}/g;s/\[year\]/$YEAR/g"`"
+    [ -n "$FORMAT_WIDTH" ] && license_text="`printf '%s' "$license_text" | fmt -p -t4 -w "$FORMAT_WIDTH"`"
+    if [ "$DRYRUN" = 'no' ]
+    then
+        printf '%s' "$license_text" > ./LICENSE \
+          && printf >&2 'success: added license\n' \
+          || printf >&2 'error: could not add license\n'
+    else
+        printf '%s' "$license_text"
+    fi
 else
     printf >&2 '%s: `%s'\'' already exists, use --force to overwrite\n' \
         "$SCRIPTNAME" 'LICENSE'
