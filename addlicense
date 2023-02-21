@@ -244,18 +244,18 @@ EOF
             then
                 printf >&2 '%s: only specify one license name\n' "$SCRIPTNAME"
                 exit 1
-            elif ! ls "$LICENSE_DIR" | grep --color=none -E "^$1(\..*)?" &>/dev/null
+            elif ! ls "$LICENSE_DIR" | grep --color=none -i -E "^$1(\..*)?" &>/dev/null
             then
                 printf >&2 '%s: license `%s'\'' not available\n\nAVAILABLE LICENSES:\n%s\n' \
                     "$SCRIPTNAME" "$1" "$LICENSE_OPTIONS"
                 exit 1
             else
-                LICENSE="`ls "$LICENSE_DIR" | grep --color=none -E "^$1(\..*)?"`"
+                LICENSE="`ls "$LICENSE_DIR" | grep --color=none -i -E "^$1(\..*)?"`"
                 if [ "`printf %s "$LICENSE" | wc -l`" -gt 1 ]
                 then
                     printf >&2 '%s: ambiguous license name\n' "$SCRIPTNAME"
                     printf >&2 '`%s'\'' could refer to:' "$1"
-                    printf >&2 ' %s' `for L in $LICENSE; do echo "`printf %s "$L" | sed 's/\..*$//'`"; done`
+                    printf >&2 ' %s' `for L in $LICENSE; do printf %s "$L" | sed 's/\..*$//'; done`
                     exit 1
                 fi
             fi
@@ -277,7 +277,7 @@ fi
 
 OUTPUT_LOC=./LICENSE
 if [ ! -e $OUTPUT_LOC ] || [ "$USETHEFORCE" = 'yes' ] || [ "$DRYRUN" = 'yes' ]; then
-    PROJECT_NAME="`pwd | sed -E 's/^.*\/([^/]*)\/?/\1/'`"
+    # PROJECT_NAME="`pwd | sed -E 's/^.*\/([^/]*)\/?/\1/'`"
     printf >&2 '© %s by %s%s\n' "$YEAR" "$NAME" "$EMAIL"
     printf >&2 'license: %s\n' "`printf %s "$LICENSE" | sed 's/\..*$//'`"
 
@@ -285,11 +285,11 @@ if [ ! -e $OUTPUT_LOC ] || [ "$USETHEFORCE" = 'yes' ] || [ "$DRYRUN" = 'yes' ]; 
     [ -n "$FORMAT_WIDTH" ] && license_text="`printf '%s' "$license_text" | fmt -p -t4 -w "$FORMAT_WIDTH"`"
     if [ "$DRYRUN" = 'no' ]
     then
-        printf '%s' "$license_text" > ./LICENSE \
+        printf '%s\n' "$license_text" > ./LICENSE \
           && printf >&2 'success: added license\n' \
           || printf >&2 'error: could not add license\n'
     else
-        printf '%s' "$license_text"
+        printf '%s\n' "$license_text"
     fi
 else
     printf >&2 '%s: `%s'\'' already exists, use --force to overwrite\n' \
